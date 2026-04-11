@@ -1,0 +1,154 @@
+schema_version: 1.0.0
+name: coze_seedance15pro_test_sales
+id: 7618839501548896271
+description: "sales\n"
+mode: workflow
+icon: plugin_icon/workflow.png
+nodes:
+    - id: "100001"
+      type: start
+      title: 开始
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-Start-v2.jpg
+      description: "工作流的起始节点，用于设定启动工作流需要的信息"
+      position:
+        x: 25.386775065749415
+        y: 0.05000000000001137
+      parameters:
+        node_outputs:
+            duration:
+                type: float
+                required: true
+                value: null
+            generate_audio:
+                type: boolean
+                required: true
+                value: null
+            image:
+                type: image
+                value: null
+            image_url:
+                type: string
+                value: null
+            prompt:
+                type: string
+                required: true
+                value: null
+            ratio:
+                type: string
+                required: true
+                value: null
+            resolution:
+                type: string
+                required: true
+                value: null
+    - id: "900001"
+      type: end
+      title: 结束
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-End-v2.jpg
+      description: "工作流的最终节点，用于返回工作流运行后的结果信息"
+      position:
+        x: 966.061889453878
+        y: -12.949999999999989
+      parameters:
+        node_inputs:
+            - name: video
+              input:
+                type: video
+                value:
+                    path: video
+                    ref_node: "148755"
+        terminatePlan: returnVariables
+    - id: "148755"
+      type: video_generation
+      title: 视频生成
+      icon: https://lf3-static.bytednsdoc.com/obj/eden-cn/dvsmryvd_avi_dvsm/ljhwZthlaukjlkulzlp/icon/icon-VideoGeneration.png
+      description: "通过文本描述或添加参考图生成视频，注：此节点为付费节点，具体费用可见节点文档介绍"
+      position:
+        x: 460.9999694824219
+        y: -24.94999999999999
+      parameters:
+        cameraFixed: false
+        duration: 12
+        dynamicParameters: []
+        firstFrame:
+            assistType: 2
+            type: string
+            value:
+                content:
+                    blockID: "100001"
+                    name: image
+                    source: block-output
+                rawMeta:
+                    type: 7
+                type: ref
+        generateAudio: true
+        generateMode: image2Video
+        lastFrame:
+            assistType: 2
+            type: string
+            value:
+                content:
+                    blockID: "100001"
+                    name: image
+                    source: block-output
+                rawMeta:
+                    type: 7
+                type: ref
+        model: doubao-seedance-1.5-pro
+        node_inputs:
+            - name: prompt
+              input:
+                value:
+                    path: prompt
+                    ref_node: "100001"
+            - name: image_url
+              input:
+                value:
+                    path: image_url
+                    ref_node: "100001"
+            - name: duration
+              input:
+                value:
+                    path: duration
+                    ref_node: "100001"
+            - name: ratio
+              input:
+                value:
+                    path: ratio
+                    ref_node: "100001"
+            - name: resolution
+              input:
+                value:
+                    path: resolution
+                    ref_node: "100001"
+            - name: generate_audio
+              input:
+                value:
+                    path: generate_audio
+                    ref_node: "100001"
+            - name: image
+              input:
+                value:
+                    path: image
+                    ref_node: "100001"
+        node_outputs:
+            msg:
+                type: string
+                value: null
+            video:
+                type: video
+                value: null
+        prompt: '{{prompt}}'
+        ratio: adaptive
+        resolution: 720p
+        seed: -1
+        settingOnError:
+            processType: 1
+            retryTimes: 0
+            timeoutMs: 360000
+        watermark: false
+edges:
+    - source_node: "100001"
+      target_node: "148755"
+    - source_node: "148755"
+      target_node: "900001"
