@@ -1,0 +1,8 @@
+{
+  "description": "春笔的 OpenClaw Skills 备份仓库",
+  "同步规则": "每个 skill 单独一个文件夹，含 SKILL.md 和相关文件",
+  "更新时间": "2026-04-13",
+  "skills列表": [
+    "windows-desktop-master"
+  ]
+}
