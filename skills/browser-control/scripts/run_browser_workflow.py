@@ -1,17 +1,10 @@
-"""一键运行浏览器工作流 - 精准控制闭环方案配套
+"""
+browser-control 工作流一键运行器
 
-支持两种执行引擎：
-  --engine playwright  (默认) 直接调用 playwright CLI
-  --engine lobster     通过 lobster workflow YAML 执行
-
- lobster 执行路径：
-  lobster run browser-precision-workflow.yaml
-    --args-json '{"target_url":"...", "screenshot_path":"..."}'
-    --mode tool
-
-前置条件：
-  1. Chrome 调试端口 9222 已启动
-  2. lobster CLI 已安装 (npm i -g @clawdbot/lobster)
+用法:
+  python run_browser_workflow.py --target "https://www.example.com"
+  python run_browser_workflow.py --workflow "examples/baidu_search.json"
+  python run_browser_workflow.py --target "..." --engine lobster --dry-run
 """
 import subprocess
 import sys
@@ -24,113 +17,145 @@ import argparse
 from pathlib import Path
 
 # Windows GBK 兼容
-if sys.stdout.encoding != 'utf-8':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+if sys.stdout.encoding != "utf-8":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 SCRIPT_DIR = Path(__file__).parent
 SKILL_DIR = SCRIPT_DIR.parent
 CHECK_PORT_SCRIPT = SCRIPT_DIR / "check_ports.py"
 WORKFLOW_YAML = SCRIPT_DIR / "browser-precision-workflow.yaml"
 LOBSTER_BIN = Path.home() / "AppData/Roaming/npm/node_modules/@clawdbot/lobster/bin/lobster.js"
+CHROME_PATH = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+CHROME_PATH_ALT = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
 
 
-def run_cmd(cmd, timeout=30, cwd=None):
-    """执行命令，返回 (returncode, stdout, stderr)"""
-    preview = cmd[:80] + '...' if len(cmd) > 80 else cmd
-    print(f"[CMD] {preview}")
+# ──────────────────────────────────────────
+# 端口检测
+# ──────────────────────────────────────────
+
+def check_port(host: str = "127.0.0.1", port: int = 9222,
+              timeout: int = 3) -> bool:
+    """检测端口是否开放"""
+    import socket
     try:
-        result = subprocess.run(
-            cmd, shell=True, capture_output=True, text=True,
-            encoding='utf-8', errors='replace',
-            timeout=timeout, cwd=cwd or SCRIPT_DIR
-        )
-        return result.returncode, result.stdout, result.stderr
-    except subprocess.TimeoutExpired:
-        return -1, "", "Command timed out"
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except (socket.timeout, ConnectionRefusedError, OSError):
+        return False
 
 
-def check_ports():
-    """端口预检"""
-    print("\n" + "=" * 50)
-    print("[STEP1] 端口预检")
-    print("=" * 50)
-    code, out, err = run_cmd(f'python "{CHECK_PORT_SCRIPT}"', timeout=15)
-    print(out)
-    if err:
-        print(f"[!] stderr: {err[:200]}")
-    return code == 0
+def probe_cdp(port: int = 9222) -> dict:
+    """探测 CDP 版本信息"""
+    import urllib.request
+    try:
+        url = f"http://127.0.0.1:{port}/json/version"
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            return json.loads(resp.read())
+    except Exception:
+        return {}
 
 
-def ensure_chrome():
-    """确保 Chrome 调试模式运行"""
-    print("\n" + "=" * 50)
-    print("[STEP2] 确保 Chrome 调试模式")
-    print("=" * 50)
+# ──────────────────────────────────────────
+# Chrome 管理
+# ──────────────────────────────────────────
 
-    code, _, _ = run_cmd(
-        'curl -s --connect-timeout 3 http://127.0.0.1:9222/json/version',
-        timeout=8
+def ensure_chrome(port: int = 9222, user_data_dir: str = None,
+                 timeout: int = 10) -> bool:
+    """
+    确保 Chrome 调试模式运行
+
+    1. 探测端口是否就绪
+    2. 未就绪则启动 Chrome
+    3. 等待就绪
+    返回: True = 就绪
+    """
+    print(f"\n[Chrome] 检测调试端口 {port}...")
+
+    if check_port("127.0.0.1", port):
+        info = probe_cdp(port)
+        if info:
+            browser = info.get("browser", "?")
+            print(f"[+] Chrome 已就绪: {browser}")
+            return True
+
+    print("[!] Chrome 未启动，启动中...")
+
+    # 找 Chrome
+    chrome_paths = [CHROME_PATH, CHROME_PATH_ALT]
+    chrome_exe = None
+    for p in chrome_paths:
+        if os.path.exists(p):
+            chrome_exe = p
+            break
+
+    if not chrome_exe:
+        # 尝试 PATH 中找
+        for name in ["chrome.exe", "chrome"]:
+            try:
+                result = subprocess.run(
+                    ["where", name], capture_output=True, text=True, timeout=5
+                )
+                if result.returncode == 0:
+                    chrome_exe = result.stdout.strip().splitlines()[0]
+                    break
+            except Exception:
+                pass
+
+    if not chrome_exe:
+        print("[X] 未找到 Chrome，请手动启动：")
+        print('    chrome.exe --remote-debugging-port=9222')
+        return False
+
+    # 启动参数
+    user_data = user_data_dir or os.path.join(os.getenv("TEMP", "."), "chrome_debug_openclaw")
+    os.makedirs(user_data, exist_ok=True)
+
+    cmd = (
+        f'"{chrome_exe}" '
+        f"--remote-debugging-port={port} "
+        f'--user-data-dir="{user_data}" '
+        f"--no-first-run --no-default-browser-check "
+        f"--no-sandbox "
+        f"--disable-dev-shm-usage"
     )
-    if code == 0:
-        print("[+] Chrome 调试端口已就绪")
-        return True
 
-    print("[!] Chrome 未检测到，尝试启动...")
-    if platform.system() == "Windows":
-        chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
-        if not os.path.exists(chrome_path):
-            chrome_path = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
-        if os.path.exists(chrome_path):
-            subprocess.Popen(
-                f'"{chrome_path}" --remote-debugging-port=9222 '
-                f'--user-data-dir="{os.getenv("TEMP")}\\chrome_debug" '
-                f'--no-first-run --no-default-browser-check',
-                shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-            )
-        else:
-            print("[X] 未找到 Chrome，请手动启动:")
-            print('   chrome.exe --remote-debugging-port=9222')
-            return False
-    else:
-        subprocess.Popen(
-            'google-chrome --remote-debugging-port=9222 '
-            '--user-data-dir=/tmp/chrome_debug --no-sandbox',
-            shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
-
-    print("[WAIT] 等待 Chrome 启动（5s）...")
-    time.sleep(5)
-    code, _, _ = run_cmd(
-        'curl -s --connect-timeout 5 http://127.0.0.1:9222/json/version',
-        timeout=8
+    print(f"[Chrome] 启动: {os.path.basename(chrome_exe)} --remote-debugging-port={port}")
+    subprocess.Popen(
+        cmd,
+        shell=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        creationflags=0 if platform.system() != "Windows" else 0x08000000
     )
-    if code == 0:
-        print("[+] Chrome 调试端口已就绪")
-        return True
-    print("[X] Chrome 启动失败")
+
+    # 等待就绪
+    print(f"[Chrome] 等待启动（最多 {timeout}s）...")
+    for i in range(timeout):
+        time.sleep(1)
+        if check_port("127.0.0.1", port):
+            info = probe_cdp(port)
+            browser = info.get("browser", "?")
+            print(f"[+] Chrome 已就绪: {browser}（启动耗时 {i+1}s）")
+            return True
+        if i == timeout - 1:
+            break
+        print(f"  等待中... ({i+1}/{timeout}s)", end="\r")
+
+    print(f"[X] Chrome 启动超时（{timeout}s）")
     return False
 
 
-def prepare_dirs():
-    """准备输出目录"""
-    print("\n" + "=" * 50)
-    print("[STEP3] 准备工作目录")
-    print("=" * 50)
-    for d in ["checkpoints", "screenshots", "output"]:
-        target = SKILL_DIR / d
-        target.mkdir(exist_ok=True)
-        print(f"  [+] {target}")
-    return True
+# ──────────────────────────────────────────
+# 执行引擎
+# ──────────────────────────────────────────
 
-
-# ─────────────────────────────────────────────
-# 引擎A：Playwright CLI（直接，已验证）
-# ─────────────────────────────────────────────
-def run_playwright(target_url, output_file):
-    """Playwright CLI 全页截图"""
-    print("\n" + "=" * 50)
-    print(f"[ENGINE-A] Playwright CLI 截图")
-    print("=" * 50)
+def run_playwright(target_url: str, output_file: str = "./output/result.json",
+                  screenshot: str = "./screenshots/page.png") -> bool:
+    """
+    引擎A: Playwright CLI 截图
+    最简单直接的执行方式
+    """
+    print(f"\n[Engine-A] Playwright CLI | {target_url}")
 
     screenshot_path = SKILL_DIR / "screenshots" / "page.png"
 
@@ -141,94 +166,91 @@ def run_playwright(target_url, output_file):
         f'"{target_url}" '
         f'"{screenshot_path}"'
     )
-    code, out, err = run_cmd(cmd, timeout=60)
 
-    print(out)
-    if err:
-        print(f"[!] stderr: {err[:300]}")
+    try:
+        result = subprocess.run(
+            cmd, shell=True, capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+            timeout=60, cwd=str(SKILL_DIR)
+        )
+    except subprocess.TimeoutExpired:
+        print("[X] Playwright 执行超时（60s）")
+        return False
 
-    if code == 0 and screenshot_path.exists():
-        print(f"[+] 截图已保存: {screenshot_path}")
-        result = {"url": target_url, "screenshot": str(screenshot_path), "status": "success"}
-        output_path = SKILL_DIR / output_file.lstrip("./")
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(result, f, ensure_ascii=False, indent=2)
-        print(f"[+] 结果已保存: {output_path}")
+    if result.stdout:
+        for line in result.stdout.splitlines():
+            if line.strip():
+                print(f"  {line.strip()}")
+    if result.returncode != 0 and result.stderr:
+        err_lines = result.stderr.strip().splitlines()
+        for line in err_lines[:5]:
+            if line.strip():
+                print(f"  [!] {line.strip()}")
+
+    if result.returncode == 0 and screenshot_path.exists():
+        size_kb = screenshot_path.stat().st_size / 1024
+        print(f"[+] 截图成功: {screenshot_path.name} ({size_kb:.1f}KB)")
+
+        result_data = {
+            "url": target_url,
+            "screenshot": str(screenshot_path),
+            "screenshot_size_kb": round(size_kb, 1),
+            "engine": "playwright_cli",
+            "status": "success"
+        }
+        out_path = SKILL_DIR / output_file.lstrip("./")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(result_data, f, ensure_ascii=False, indent=2)
+        print(f"[+] 结果已保存: {out_path.name}")
         return True
-    print("[X] 截图失败")
+
+    print(f"[X] Playwright 执行失败（rc={result.returncode}）")
     return False
 
 
-# ─────────────────────────────────────────────
-# 引擎B：lobster Workflow（体系化作战）
-# ─────────────────────────────────────────────
-def run_lobster(target_url, screenshot_path, output_file):
-    """lobster workflow YAML 执行"""
-    print("\n" + "=" * 50)
-    print(f"[ENGINE-B] lobster Workflow 执行")
-    print("=" * 50)
-
+def run_lobster(target_url: str, workflow_file: str = None,
+               screenshot_path: str = None,
+               output_file: str = "workflow_result.json") -> bool:
+    """
+    引擎B: lobster Workflow YAML 执行
+    体系化作战，带 checkpoint + 验证
+    """
     lobster_js = LOBSTER_BIN
+
     if not lobster_js.exists():
-        print(f"[X] lobster CLI 未找到: {lobster_js}")
-        print("    安装: npm i -g @clawdbot/lobster")
+        print(f"[X] lobster CLI 未安装，跳转到 Engine-A")
         return False
 
-    # lobster workflow args
+    print(f"\n[Engine-B] lobster Workflow")
+
+    wf = workflow_file or WORKFLOW_YAML
+    ss_path = screenshot_path or "screenshots/page.png"
+
     args = {
         "target_url": target_url,
-        "screenshot_path": str(Path(screenshot_path).as_posix()),
+        "screenshot_path": str(Path(ss_path).as_posix()),
         "chrome_port": "9222",
-        "gateway_port": "18789",
         "output_file": str(Path(output_file).as_posix()),
     }
     args_json = json.dumps(args, ensure_ascii=False)
 
-    # 工作目录切换到 scripts/（lobster 在这里找 relative path）
     cmd = [
         "node", str(lobster_js),
         "run",
-        "--file", str(WORKFLOW_YAML.resolve()),
+        "--file", str(wf.resolve()),
         "--args-json", args_json,
         "--mode", "tool"
     ]
-    cmd_str = " ".join(f'"{a}"' if " " in str(a) else a for a in cmd)
-    print(f"[CMD] {cmd_str[:120]}...")
 
+    print(f"[lobster] {wf.name}")
     try:
         result = subprocess.run(
             cmd, shell=False,
             capture_output=True, text=True,
-            encoding='utf-8', errors='replace',
-            timeout=120,
-            cwd=str(SCRIPT_DIR)
+            encoding="utf-8", errors="replace",
+            timeout=120, cwd=str(SCRIPT_DIR)
         )
-        stdout = result.stdout.strip()
-        stderr = result.stderr.strip()
-
-        if stdout:
-            try:
-                parsed = json.loads(stdout)
-                print(f"[LOBSTER] ok={parsed.get('ok')} status={parsed.get('status','-')}")
-                if not parsed.get('ok') and parsed.get('error'):
-                    print(f"[X] lobster error: {parsed['error'].get('message','?')}")
-                    if stderr:
-                        print(f"    stderr: {stderr[:300]}")
-                    return False
-                return True
-            except json.JSONDecodeError:
-                print(f"[LOBSTER] raw output: {stdout[:500]}")
-                if stderr:
-                    print(f"    stderr: {stderr[:300]}")
-
-        if result.returncode != 0 and not stdout:
-            print(f"[X] lobster 执行失败 (rc={result.returncode})")
-            if stderr:
-                print(f"    stderr: {stderr[:300]}")
-            return False
-
-        return result.returncode == 0
-
     except subprocess.TimeoutExpired:
         print("[X] lobster 执行超时（120s）")
         return False
@@ -236,72 +258,142 @@ def run_lobster(target_url, screenshot_path, output_file):
         print(f"[X] lobster 异常: {e}")
         return False
 
+    stdout = result.stdout.strip()
+    stderr = result.stderr.strip()
+
+    if stdout:
+        try:
+            parsed = json.loads(stdout)
+            ok = parsed.get("ok", False)
+            status = parsed.get("status", "-")
+            steps = parsed.get("steps", [])
+            print(f"[lobster] ok={ok} status={status} steps={len(steps)}")
+            if not ok and parsed.get("error"):
+                err = parsed["error"]
+                print(f"[X] lobster 错误: {err.get('message', err)}")
+            if stderr and len(stderr) < 300:
+                print(f"  stderr: {stderr}")
+            return ok
+        except json.JSONDecodeError:
+            if stdout:
+                print(f"[lobster] {stdout[:200]}")
+                if stderr and len(stderr) < 300:
+                    print(f"  stderr: {stderr[:200]}")
+
+    if result.returncode != 0:
+        print(f"[X] lobster failed (rc={result.returncode})")
+        if stderr:
+            print(f"  {stderr[:300]}")
+        return False
+
+    return result.returncode == 0
+
+
+# ──────────────────────────────────────────
+# 主入口
+# ──────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="浏览器精准控制工作流运行器")
-    parser.add_argument("--target", "-t", default="https://www.example.com",
+    parser = argparse.ArgumentParser(
+        description="browser-control 工作流运行器",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+  python run_browser_workflow.py --target "https://baidu.com"
+  python run_browser_workflow.py --workflow "examples/baidu_search.json"
+  python run_browser_workflow.py --target "..." --engine lobster --dry-run
+  python run_browser_workflow.py --list-engines
+        """
+    )
+    parser.add_argument("--target", "-t",
+                        default="https://www.example.com",
                         help="目标 URL")
-    parser.add_argument("--output", "-o", default="./output/result.json",
+    parser.add_argument("--workflow", "-w",
+                        help="workflow 文件路径（默认: browser-precision-workflow.yaml）")
+    parser.add_argument("--output", "-o",
+                        default="./output/result.json",
                         help="输出文件路径")
-    parser.add_argument("--engine", "-e", default="playwright",
+    parser.add_argument("--engine", "-e",
                         choices=["playwright", "lobster", "auto"],
-                        help="执行引擎: playwright(默认)|lobster|auto(优先lobster)")
+                        default="auto",
+                        help="引擎: playwright(快速截图) | lobster(体系化) | auto(先lobster失败再playwright)")
+    parser.add_argument("--no-chrome", action="store_true",
+                        help="跳过 Chrome 启动检查")
+    parser.add_argument("--chrome-port", type=int, default=9222,
+                        help="Chrome 调试端口")
     parser.add_argument("--dry-run", action="store_true",
                         help="lobster dry-run 模式")
+    parser.add_argument("--list-engines", action="store_true",
+                        help="列出可用引擎")
 
     args = parser.parse_args()
 
-    print("=" * 50)
-    print(f"[RUN] 浏览器精准控制工作流 (引擎: {args.engine})")
-    print("=" * 50)
-    print(f"  目标: {args.target}")
-    print(f"  输出: {args.output}")
+    # 列出引擎
+    if args.list_engines:
+        print("可用引擎:")
+        print(f"  playwright  Playwright CLI 截图（快速简单）")
+        lobster_status = "✓" if LOBSTER_BIN.exists() else "✗"
+        print(f"  lobster      lobster Workflow YAML {lobster_status}")
+        print(f"  auto         lobster 失败后自动回退到 playwright")
+        print(f"\nlobster 路径: {LOBSTER_BIN}")
+        return 0
 
-    # 1. 端口预检
-    if not check_ports():
-        resp = input("[!] 端口检测失败，是否继续？ (y/N): ")
-        if resp.lower() != 'y':
-            sys.exit(1)
+    # 准备输出目录
+    for d in ["checkpoints", "screenshots", "output"]:
+        (SKILL_DIR / d).mkdir(exist_ok=True)
 
-    # 2. Chrome
-    if not ensure_chrome():
-        resp = input("[!] Chrome 启动失败，是否继续？ (y/N): ")
-        if resp.lower() != 'y':
-            sys.exit(1)
+    # Chrome
+    if not args.no_chrome:
+        ready = ensure_chrome(port=args.chrome_port)
+        if not ready:
+            resp = input("Chrome 未就绪，是否继续？(y/N): ").strip().lower()
+            if resp != "y":
+                return 1
 
-    # 3. 目录
-    prepare_dirs()
+    print(f"\n{'='*50}")
+    print(f"[RUN] target={args.target}")
+    print(f"      engine={args.engine}")
+    print(f"      output={args.output}")
+    print(f"{'='*50}")
 
-    # 4. 执行
-    screenshot_path = SKILL_DIR / "screenshots" / "lobster_page.png"
+    success = False
 
+    # lobster dry-run
+    if args.dry_run and args.engine in ("lobster", "auto"):
+        lobster_js = LOBSTER_BIN
+        if lobster_js.exists():
+            wf = args.workflow or WORKFLOW_YAML
+            cmd = ["node", str(lobster_js), "run", "--dry-run",
+                   "--file", str(wf.resolve())]
+            subprocess.run(cmd, cwd=str(SCRIPT_DIR))
+        else:
+            print("[X] lobster 未安装")
+        return 0
+
+    # 执行
     if args.engine in ("lobster", "auto"):
-        # lobster dry-run
-        if args.dry_run:
-            lobster_js = LOBSTER_BIN
-            if lobster_js.exists():
-                cmd = ["node", str(lobster_js), "run", "--dry-run",
-                       "--file", str(WORKFLOW_YAML.resolve())]
-                subprocess.run(cmd, cwd=str(SCRIPT_DIR))
-            else:
-                print("[X] lobster 未安装，跳过 dry-run")
-            sys.exit(0)
-
-        success = run_lobster(args.target, screenshot_path, args.output)
+        success = run_lobster(
+            target_url=args.target,
+            workflow_file=args.workflow,
+            output_file=args.output
+        )
         if not success and args.engine == "auto":
-            print("[!] lobster 失败，切换到 Playwright CLI")
+            print("[!] lobster 失败，自动回退到 Playwright CLI")
             success = run_playwright(args.target, args.output)
-    else:
+
+    if args.engine == "playwright":
         success = run_playwright(args.target, args.output)
 
-    print("\n" + "=" * 50)
+    # 结果
+    print(f"\n{'='*50}")
     if success:
-        print("[+] 工作流执行成功")
+        print(f"[✓] 工作流执行成功")
     else:
-        print("[X] 工作流执行失败")
-    print("=" * 50)
-    sys.exit(0 if success else 1)
+        print(f"[✗] 工作流执行失败")
+    print(f"{'='*50}")
+
+    return 0 if success else 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)

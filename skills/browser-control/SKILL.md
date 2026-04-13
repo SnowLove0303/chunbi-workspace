@@ -56,12 +56,13 @@ lobster Workflow YAML（编排层）
 
 ```
 browser_control/
-├── __init__.py           # 包入口
-├── client.py             # BrowserClient（连接 Chrome CDP）+ run_actions()
-├── actions.py            # 动作工厂函数（nav/click/type/extract/...）
-├── lobster_steps.py      # lobster workflow step CLI 入口
+├── client.py          # BrowserClient（连接 Chrome CDP）+ run_actions()
+│                        支持: 自动重连 / ud__ 选择器 / 20+ 原子操作
+├── actions.py         # 动作工厂函数（nav/click/type/extract/...）
+├── lobster_steps.py   # lobster workflow step CLI（独立可调用的 step）
+├── retry.py           # 重试装饰器 + 错误分类（BrowserStepError 体系）
 └── examples/
-    ├── baidu_search.json         # 百度搜索示例（nav+eval_js+type+extract）
+    ├── baidu_search.json         # 百度搜索示例
     └── browser-interactive-workflow.yaml  # lobster workflow 模板
 ```
 
@@ -79,7 +80,18 @@ browser_control/
 | `extract_table` | `selector`, `as` | 提取表格为字典列表 |
 | `screenshot` | `path`, `full_page`, `selector` | 截图 |
 | `scroll` | `to`, `selector`, `delta_y` | 滚动（top/bottom/坐标） |
+| `scroll_until_load` | `selector`, `delta_y` | 懒加载滚动（自动翻页） |
 | `eval_js` | `script` | 执行 JavaScript |
+| `extract_all` | `selector`, `schema` | 批量提取多条记录（schema 映射） |
+| `get_cookies` | - | 获取当前 cookies |
+| `set_cookies` | `cookies` | 恢复登录态 |
+| `html` | `selector` | 提取 HTML |
+| `select` | `selector`, `value` | 下拉框选择 |
+| `hover` | `selector` | 悬停 |
+| `rightclick` | `selector` | 右键菜单 |
+| `hotkey` | `keys` | 组合键（Control+c 等） |
+| `wait_url` | `pattern` | 等待 URL 匹配 |
+| `fill` | `selector`, `text` | React 受控组件专用（直接 set value） |
 
 ---
 
@@ -170,6 +182,92 @@ python browser_control/lobster_steps.py --action run_workflow --workflow example
 # 交互式调试（从 stdin 逐条输入动作）
 python browser_control/lobster_steps.py --action interactive --cdp-url http://127.0.0.1:9222
 ```
+
+---
+
+### 验证工具
+
+#### 三维验证器（verify_step.py）
+
+```bash
+# 功能精准度
+python scripts/verify_step.py --step check_nav \
+  --expected-url "baidu.com" --actual-url "https://baidu.com" \
+  --selector "#kw" --expected-state matched --actual-state matched
+
+# 效率得分
+python scripts/verify_step.py --step check_perf \
+  --timeout-ms 5000 --actual-time-ms 2100
+
+# 成果达标率
+python scripts/verify_step.py --step check_output \
+  --file-path "output/workflow_result.json" \
+  --required-fields "url,screenshot,steps"
+
+# 综合判定（最终调用）
+python scripts/verify_step.py --step check_all
+```
+
+评分标准：
+- `PASS` = 所有维度 >= 60
+- `RETRY` = 部分维度 < 60，无维度 < 40
+- `ABORT` = 任何维度 < 40
+- `PASS*` = 无验证数据（降级通过）
+
+#### Checkpoint 系统（checkpoint.py）
+
+```bash
+# 保存当前登录态
+python scripts/checkpoint.py --action save --name "logged_in"
+
+# 列出所有 checkpoint
+python scripts/checkpoint.py --action list
+
+# 验证 checkpoint
+python scripts/checkpoint.py --action verify --name "logged_in" \
+  --verify-url "app.example.com/dashboard"
+
+# 对比两个 checkpoint
+python scripts/checkpoint.py --action diff --name "step1.json" --other "step2.json"
+
+# 恢复登录态
+python scripts/checkpoint.py --action restore --name "logged_in"
+```
+
+#### 一键运行器（run_browser_workflow.py）
+
+```bash
+# 自动 Chrome + lobster workflow
+python scripts/run_browser_workflow.py --target "https://example.com"
+
+# 列出可用引擎
+python scripts/run_browser_workflow.py --list-engines
+
+# lobster 失败自动回退到 Playwright CLI
+python scripts/run_browser_workflow.py --target "..." --engine auto
+
+# lobster dry-run
+python scripts/run_browser_workflow.py --target "..." --engine lobster --dry-run
+```
+
+### 错误分类与自动重连
+
+`client.py` 内置自动重连 + 错误分类：
+
+| 错误类型 | 说明 | 重试 |
+|---------|------|------|
+| `SELECTOR_NOT_FOUND` | 选择器未命中 | ✓ |
+| `TIMEOUT` | 操作超时 | ✓ |
+| `BROWSER_DISCONNECTED` | 浏览器断开 | ✓（自动重连）|
+| `NAVIGATION_ERROR` | DNS/拒绝连接 | ✓ |
+| `NETWORK_ERROR` | 网络错误 | ✓ |
+| 其他 | 未知错误 | ✗（直接抛出）|
+
+`ud__` 选择器简写（自动转换为 `[class*=xxx]`）：
+```json
+{"action": "click", "selector": "ud__dialog__root >> ud__dialog__content >> button"}
+```
+→ `[class*=dialog-root] [class*=dialog-content] button`
 
 ---
 
