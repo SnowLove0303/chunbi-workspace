@@ -1,0 +1,20 @@
+[
+  {"action": "nav", "url": "https://open.feishu.cn/app"},
+  {"action": "wait_timeout", "ms": 3000},
+  {"action": "eval_js", "script": "(function(){var el=Array.from(document.querySelectorAll('button')).find(function(b){return b.textContent.trim()==='Create Custom App'});if(el){el.click();return 'CLICKED';}return 'NOT_FOUND';})();"},
+  {"action": "wait_timeout", "ms": 5000},
+  {"action": "screenshot", "path": "F:\\openclaw1\\.openclaw\\workspace\\skills\\browser-control\\screenshots\\feishu_01_modal.png", "full_page": false},
+
+  {"action": "eval_js", "script": "(function(){var root=document.querySelector('[class*=ud__dialog__root]');if(!root)return 'NO_ROOT';var allEls=root.querySelectorAll('*');for(var i=0;i<allEls.length;i++){var tag=allEls[i].tagName;if((tag==='INPUT'||tag==='TEXTAREA')&&allEls[i].offsetWidth>0){var el=allEls[i];var nativeSetter;if(tag==='INPUT'){nativeSetter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;}else{nativeSetter=Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set;}nativeSetter.call(el,'CopawFeishuTest');el.dispatchEvent(new Event('input',{bubbles:true,composed:true,cancelable:true}));el.dispatchEvent(new Event('change',{bubbles:true,composed:true,cancelable:true}));return 'NAME_SET:'+tag+':W:'+el.offsetWidth;}}return 'NO_VISIBLE_INPUT';})();"},
+
+  {"action": "eval_js", "script": "(function(){var root=document.querySelector('[class*=ud__dialog__root]');if(!root)return 'NO_ROOT';var allEls=root.querySelectorAll('*');for(var i=0;i<allEls.length;i++){var tag=allEls[i].tagName;if(tag==='TEXTAREA'&&allEls[i].offsetWidth>0){var el=allEls[i];var ns=Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set;ns.call(el,'1');el.dispatchEvent(new Event('input',{bubbles:true,composed:true,cancelable:true}));el.dispatchEvent(new Event('change',{bubbles:true,composed:true,cancelable:true}));return 'DESC_SET';}}return 'NO_DESC';})();"},
+
+  {"action": "wait_timeout", "ms": 800},
+  {"action": "screenshot", "path": "F:\\openclaw1\\.openclaw\\workspace\\skills\\browser-control\\screenshots\\feishu_02_form_filled.png", "full_page": false},
+
+  {"action": "eval_js", "script": "(function(){var root=document.querySelector('[class*=ud__dialog__root]');if(!root)return 'NO_ROOT';var btns=root.querySelectorAll('button');for(var i=0;i<btns.length;i++){if(btns[i].textContent.trim()==='Create'){btns[i].click();return 'CREATE_CLICKED';}}return 'NO_CREATE';})();"},
+
+  {"action": "wait_timeout", "ms": 6000},
+  {"action": "screenshot", "path": "F:\\openclaw1\\.openclaw\\workspace\\skills\\browser-control\\screenshots\\feishu_03_created.png", "full_page": true},
+  {"action": "eval_js", "script": "(function(){var appLinks=document.querySelectorAll('a[href*=app]');var apps=[];for(var i=0;i<appLinks.length;i++){var t=appLinks[i].textContent.trim();if(t&&t.length<50&&!t.includes(' ')&&t.length>3)apps.push(t);}return JSON.stringify({url:window.location.href,apps:apps.slice(0,8)});})();"}
+]
