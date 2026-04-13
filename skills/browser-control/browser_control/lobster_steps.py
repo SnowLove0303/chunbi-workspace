@@ -112,6 +112,28 @@ def step_type(selector: str, text: str, clear: bool = True,
     return 0 if ok else 1
 
 
+def step_fill(selector: str, text: str, timeout: int = 30000,
+              cdp_url: str = DEFAULT_CDP_URL) -> int:
+    """单步 fill（React 专用）"""
+    print(f"[=] Fill {selector}: {text[:50]}{'...' if len(text) > 50 else ''}")
+    result = run_actions([{"action": "fill", "selector": selector, "text": text, "timeout": timeout}],
+                         cdp_url=cdp_url)
+    ok = result["steps"][0].get("ok")
+    print(f"[{'+' if ok else 'X'}] Fill{'成功' if ok else '失败'}")
+    return 0 if ok else 1
+
+
+def step_click_ud(selector: str, timeout: int = 30000,
+                  cdp_url: str = DEFAULT_CDP_URL) -> int:
+    """单步 click（支持 ud__ 选择器）"""
+    print(f"[=] Click_ud {selector}")
+    result = run_actions([{"action": "click_ud", "selector": selector, "timeout": timeout}],
+                         cdp_url=cdp_url)
+    ok = result["steps"][0].get("ok")
+    print(f"[{'+' if ok else 'X'}] Click{'成功' if ok else '失败'}")
+    return 0 if ok else 1
+
+
 def step_extract(selector: str, attr: str = None, text: bool = True,
                 as_key: str = None, cdp_url: str = DEFAULT_CDP_URL) -> int:
     """单步提取"""
@@ -187,7 +209,7 @@ def main():
     parser = argparse.ArgumentParser(description="browser-control lobster steps")
     parser.add_argument("--action", "-a", required=True,
                         choices=["run_workflow", "navigate", "screenshot",
-                                 "click", "type", "extract", "interactive"],
+                                 "click", "type", "fill", "click_ud", "extract", "interactive"],
                         help="执行的动作")
     # run_workflow
     parser.add_argument("--workflow", help="workflow JSON 文件路径")
@@ -207,6 +229,8 @@ def main():
     # type
     parser.add_argument("--text", "-t", help="输入文本")
     parser.add_argument("--clear", type=bool, default=True)
+    # fill
+    # click_ud uses same args as click
     # extract
     parser.add_argument("--attr", help="提取属性（None=文本）")
     parser.add_argument("--as-key", help="提取结果保存的键名")
@@ -251,6 +275,18 @@ def main():
                 print("[X] --selector and --text required")
                 return 1
             return step_type(args.selector, args.text, clear=args.clear, cdp_url=args.cdp_url)
+
+        elif args.action == "fill":
+            if not args.selector or not args.text:
+                print("[X] --selector and --text required")
+                return 1
+            return step_fill(args.selector, args.text, timeout=args.timeout, cdp_url=args.cdp_url)
+
+        elif args.action == "click_ud":
+            if not args.selector:
+                print("[X] --selector required")
+                return 1
+            return step_click_ud(args.selector, timeout=args.timeout, cdp_url=args.cdp_url)
 
         elif args.action == "extract":
             if not args.selector:
