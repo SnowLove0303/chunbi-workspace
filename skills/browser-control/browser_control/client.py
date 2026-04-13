@@ -74,6 +74,31 @@ class BrowserClient:
         else:
             self._page.keyboard.type(text, delay=delay)
 
+    def fill(self, selector: str, text: str, timeout: int = DEFAULT_TIMEOUT):
+        """使用 Playwright fill（直接设置值+触发事件，适合 React）"""
+        self._page.fill(selector, text, timeout=timeout)
+
+    def click_ud(self, selector: str, timeout: int = DEFAULT_TIMEOUT):
+        """支持 ud__ 前缀的选择器（class*=XXX 的简写）"""
+        # selector 格式: "ud__dialog__root >> ud__dialog__content >> input"
+        # 转换为: [class*=ud__dialog__root] [class*=ud__dialog__content] input
+        converted = selector
+        import re
+        parts = converted.split(">>")
+        css_parts = []
+        for part in parts:
+            part = part.strip()
+            if "*=" not in part and "#" not in part and "." not in part:
+                # 可能是 tag name
+                if re.match(r'^[a-zA-Z]', part):
+                    css_parts.append(part)
+                else:
+                    css_parts.append(part)
+            else:
+                css_parts.append(part)
+        final_selector = " ".join(css_parts)
+        self._page.click(final_selector, timeout=timeout)
+
     def press(self, key: str, selector: str = None, delay: int = 0):
         """按键"""
         if selector:
@@ -160,8 +185,10 @@ class BrowserClient:
         else:
             self._page.evaluate(f"window.scrollBy({x}, {y or delta_y})")
 
-    def eval_js(self, script: str):
-        """执行 JavaScript，返回结果"""
+    def eval_js(self, script: str, args: List[Any] = None):
+        """执行 JavaScript，返回结果。可选传入 args 列表作为 evaluate 的附加参数。"""
+        if args:
+            return self._page.evaluate(script, *args)
         return self._page.evaluate(script)
 
     def get_cookies(self) -> List[Dict[str, Any]]:
@@ -225,6 +252,14 @@ def run_actions(actions: List[Dict[str, Any]], cdp_url: str = DEFAULT_CDP_URL) -
                     client.type(**args)
                     result["steps"].append({"action": action, "ok": True, **args})
 
+                elif action == "fill":
+                    client.fill(**args)
+                    result["steps"].append({"action": action, "ok": True, **args})
+
+                elif action == "click_ud":
+                    client.click_ud(**args)
+                    result["steps"].append({"action": action, "ok": True, **args})
+
                 elif action == "press":
                     client.press(**args)
                     result["steps"].append({"action": action, "ok": True, **args})
@@ -260,7 +295,7 @@ def run_actions(actions: List[Dict[str, Any]], cdp_url: str = DEFAULT_CDP_URL) -
 
                 elif action == "eval_js":
                     val = client.eval_js(**args)
-                    result["steps"].append({"action": action, "ok": True, "value": str(val)[:100]})
+                    result["steps"].append({"action": action, "ok": True, "value": str(val)[:200]})
 
             except Exception as e:
                 result["steps"].append({"action": action, "ok": False, "error": str(e), **args})
