@@ -1,0 +1,4 @@
+[
+  {"action": "eval_js", "script": "(function(){return 'URL:'+window.location.href+'|Title:'+document.title;})();"},
+  {"action": "screenshot", "path": "F:\\openclaw1\\.openclaw\\workspace\\skills\\browser-control\\screenshots\\feishu_dev_logged_in.png", "full_page": false}
+]
