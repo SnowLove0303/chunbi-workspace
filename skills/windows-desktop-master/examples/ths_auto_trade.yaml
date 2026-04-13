@@ -1,0 +1,69 @@
+# THS 自动下单 Workflow
+# 用法: python desktop_workflow.py --action run --workflow "examples/ths_auto_trade.yaml"
+
+name: THS自动下单
+description: 打开THS同花顺 → 切换到下单界面 → 输入股票代码和价格 → 确认下单
+
+steps:
+  - id: check_ths
+    action: shell
+    params:
+      command: tasklist /FI "IMAGENAME eq hexin.exe"
+    continue_on_error: true
+
+  - id: snapshot_before
+    action: snapshot
+    params:
+      path: "%TEMP%\\ths_before.png"
+
+  - id: wait_ths_ready
+    action: wait
+    params:
+      seconds: 2
+
+  - id: launch_ths
+    action: pywinauto_launch
+    params:
+      path: "E:/ths/同花顺/hexin.exe"
+      title_re: ".*同花顺.*"
+      timeout: 15
+      backend: win32
+
+  - id: open_order_panel
+    action: ahk_run
+    params:
+      script: "F:\\openclaw1\\.openclaw\\workspace\\skills\\windows-desktop-master\\examples\\ths下单流程.ahk"
+      wait: false
+
+  - id: wait_order_panel
+    action: wait
+    params:
+      seconds: 3
+
+  - id: type_stock_code
+    action: pywinauto_type
+    params:
+      title_re: ".*下单.*"
+      spec: "Edit"
+      text: "000001"
+
+  - id: press_tab_price
+    action: shell
+    params:
+      command: python -c "from scripts.pywinauto_helper import AppController; c = AppController(); c.connect(title_re='.*下单.*'); c.press('tab')"
+
+  - id: type_price
+    action: pywinauto_type
+    params:
+      title_re: ".*下单.*"
+      text: "10.50"
+
+  - id: snapshot_after
+    action: snapshot
+    params:
+      path: "%TEMP%\\ths_after.png"
+
+  - id: done
+    action: log
+    params:
+      message: "THS下单流程完成，请确认并手动下单"

@@ -1,0 +1,38 @@
+{
+  "name": "windows-desktop-master",
+  "version": "1.0.0",
+  "description": "OpenClaw Windows 桌面精准控制终极方案 — AutoHotkey 宏录制 + pywinauto GUI 控制 + winremote-mcp 40+工具",
+  "author": "春笔",
+  "created": "2026-04-13",
+  "tags": ["windows", "desktop", "automation", "autohotkey", "pywinauto", "mcp", "macro"],
+  "entry": "SKILL.md",
+  "requires": {
+    "openclaw": ">=2026.4.0",
+    "python": ">=3.11",
+    "pywinauto": ">=0.6.6",
+    "winremote-mcp": ">=0.4.15"
+  },
+  "files": [
+    "SKILL.md",
+    "skill.json",
+    "scripts/",
+    "references/",
+    "examples/"
+  ],
+  "install": {
+    "pip": [
+      "pywinauto>=0.6.6",
+      "winremote-mcp>=0.4.15",
+      "windows-mcp>=0.7.1"
+    ],
+    "manual": [
+      "运行 F:\\工作区间\\ahk-install.exe 安装 AutoHotkey v2.0"
+    ]
+  },
+  "scripts": {
+    "ahk_recorder": "python scripts/ahk_recorder.py --output",
+    "ahk_runner": "python scripts/ahk_runner.py",
+    "winremote_check": "python scripts/winremote_check.py",
+    "desktop_workflow": "python scripts/desktop_workflow.py --workflow"
+  }
+}
