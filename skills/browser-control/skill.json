@@ -1,0 +1,34 @@
+{
+  "name": "browser-control",
+  "version": "1.0.0",
+  "description": "浏览器自动化控制框架 — Playwright + fast-playwright-mcp MCP + OpenClaw browser 工具三层架构",
+  "author": "春笔",
+  "created": "2026-04-13",
+  "tags": ["browser", "playwright", "automation", "web-scraping", "mcp"],
+  "entry": "SKILL.md",
+  "requires": {
+    "openclaw": ">=2026.4.0",
+    "node": ">=18",
+    "playwright": ">=1.59"
+  },
+  "files": [
+    "SKILL.md",
+    "skill.json",
+    "scripts/",
+    "references/"
+  ],
+  "install": {
+    "npm": [],
+    "mcp": [
+      "openclaw mcp set fast-playwright-mcp '{\"command\":\"npx\",\"args\":[\"@tontoko/fast-playwright-mcp@latest\",\"--cdp-endpoint\",\"http://127.0.0.1:9222\",\"--browser\",\"chrome\",\"--port\",\"9223\"]}'"
+    ]
+  },
+  "verified": {
+    "date": "2026-04-13",
+    "platform": "Windows x64",
+    "chrome": "Chrome/146 (installed system Chrome + --channel chrome)",
+    "playwright": "1.59.1",
+    "fast-playwright-mcp": "0.1.3",
+    "lobster": "OpenClaw 插件工具（非独立 CLI）"
+  }
+}

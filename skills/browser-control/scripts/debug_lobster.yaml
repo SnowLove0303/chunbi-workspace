@@ -1,0 +1,13 @@
+name: debug-lobster
+description: 调试 lobster 变量替换
+
+variables:
+  test_url:
+    default: "https://www.baidu.com"
+  out_file:
+    default: "./output/debug.txt"
+
+steps:
+  - id: echo-test
+    description: echo 变量测试
+    run: node -e "console.log('URL:', process.env.test_url)" && echo DONE

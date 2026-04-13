@@ -1,0 +1,9 @@
+[
+  {"action": "nav", "url": "https://www.baidu.com"},
+  {"action": "wait_timeout", "ms": 2000},
+  {"action": "eval_js", "script": "document.querySelector('#kw').value = 'Python'"},
+  {"action": "press", "key": "Enter"},
+  {"action": "wait_timeout", "ms": 2500},
+  {"action": "screenshot", "path": "screenshots/baidu_search.png", "full_page": true},
+  {"action": "extract", "selector": ".c-container", "text": true, "all_": true, "as": "search_results"}
+]

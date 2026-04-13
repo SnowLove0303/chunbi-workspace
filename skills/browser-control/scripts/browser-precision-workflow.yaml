@@ -1,0 +1,56 @@
+# lobster Workflow - 浏览器精准控制
+# 使用方法: python run_lobster_workflow.py --target "https://..." --output "./output/result.json"
+
+name: browser-precision-workflow
+description: 浏览器精准控制工作流（端口预检 + Playwright截图 + 三维验证）
+
+variables:
+  target_url:
+    default: "https://www.example.com"
+  screenshot_path:
+    default: "../screenshots/page.png"
+  output_file:
+    default: "../output/result.json"
+  chrome_port:
+    default: "9222"
+  gateway_port:
+    default: "18789"
+
+steps:
+
+  # ═══════════════════════════════════════════════
+  # 第1步：端口预检
+  # ═══════════════════════════════════════════════
+  - id: pre-check-chrome
+    description: 检测 Chrome CDP 端口
+    run: curl -s --connect-timeout 3 http://127.0.0.1:${chrome_port}/json/version > nul && echo CHROME_OK || echo CHROME_FAIL
+    on_error: abort
+
+  - id: pre-check-gateway
+    description: 检测 OpenClaw Gateway
+    run: curl -s --connect-timeout 3 http://127.0.0.1:${gateway_port}/health > nul && echo GW_OK || echo GW_FAIL
+    on_error: abort
+
+  # ═══════════════════════════════════════════════
+  # 第2步：截图（Playwright CLI）
+  # ═══════════════════════════════════════════════
+  - id: screenshot
+    description: Playwright CLI 全页截图
+    run: npx playwright screenshot --channel chrome --full-page ${target_url} ${screenshot_path}
+    timeout: 60000
+
+  # ═══════════════════════════════════════════════
+  # 第3步：三维验证
+  # ═══════════════════════════════════════════════
+  - id: verify-step
+    description: 三维验证（文件存在且有效）
+    run: python verify_step.py --step screenshot --file-path ${screenshot_path} --required-fields url,screenshot,status
+    on_error: continue
+
+  # ═══════════════════════════════════════════════
+  # 第4步：保存结果
+  # ═══════════════════════════════════════════════
+  - id: save-result
+    description: 生成结果 JSON
+    run: python save_result.py ${target_url} ${screenshot_path} done
+    always_run: true

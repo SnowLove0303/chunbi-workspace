@@ -1,0 +1,72 @@
+# lobster Workflow — 浏览器精准控制
+# 使用方法: lobster run browser-lobster-workflow.yaml --var target_url="https://..."
+
+name: browser-workflow
+description: 浏览器精准控制 lobster 工作流
+
+variables:
+  target_url:
+    default: "https://www.baidu.com"
+  screenshot_path:
+    default: "./screenshots/page.png"
+  chrome_port:
+    default: "9222"
+
+steps:
+
+  # ─────────────────────────────────────────────
+  # 第1步：端口预检
+  # ─────────────────────────────────────────────
+  - id: check-chrome
+    description: 检测 Chrome CDP 端口
+    run: |
+      curl -s --connect-timeout 3 http://127.0.0.1:${chrome_port}/json/version > nul && echo OK || echo FAIL
+    tool: exec
+    on_error: abort
+
+  - id: check-gateway
+    description: 检测 OpenClaw Gateway
+    run: |
+      curl -s --connect-timeout 3 http://127.0.0.1:18789/health > nul && echo OK || echo FAIL
+    tool: exec
+    on_error: abort
+
+  # ─────────────────────────────────────────────
+  # 第2步：截图
+  # ─────────────────────────────────────────────
+  - id: screenshot
+    description: 使用 Playwright CLI 截图
+    run: |
+      npx playwright screenshot --channel chrome "${target_url}" "${screenshot_path}"
+    tool: exec
+    on_error: abort
+    checkpoint: screenshot_done
+
+  # ─────────────────────────────────────────────
+  # 第3步：验证截图
+  # ─────────────────────────────────────────────
+  - id: verify-screenshot
+    description: 验证截图是否存在且有效
+    run: |
+      python -c "import os; f='${screenshot_path}'; print('EXISTS' if os.path.exists(f) and os.path.getsize(f)>1000 else 'FAIL')"
+    tool: exec
+
+  # ─────────────────────────────────────────────
+  # 第4步：三维验证
+  # ─────────────────────────────────────────────
+  - id: verify-step
+    description: 三维验证（功能/效率/成果）
+    run: |
+      python scripts/verify_step.py --step screenshot --file-path "${screenshot_path}"
+    tool: exec
+    always_run: true
+
+  # ─────────────────────────────────────────────
+  # 第5步：保存结果
+  # ─────────────────────────────────────────────
+  - id: save-result
+    description: 生成结果 JSON
+    run: |
+      python -c "import json; open('./output/lobster_result.json','w').write(json.dumps({'url':'${target_url}','screenshot':'${screenshot_path}','status':'done'},ensure_ascii=False))"
+    tool: exec
+    always_run: true

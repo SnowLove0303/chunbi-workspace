@@ -1,0 +1,26 @@
+# lobster Workflow - 交互式浏览器自动化
+name: browser-interactive-workflow
+description: 交互式浏览器自动化工作流（nav → click → type → extract → screenshot）
+
+variables:
+  workflow_file:
+    default: "examples/baidu_search.json"
+  chrome_port:
+    default: "9222"
+
+steps:
+
+  - id: pre-check-chrome
+    description: 检测 Chrome CDP 端口
+    run: curl -s --connect-timeout 3 http://127.0.0.1:${chrome_port}/json/version > nul && echo CHROME_OK || echo CHROME_FAIL
+    on_error: abort
+
+  - id: run-workflow
+    description: 执行交互式动作序列
+    run: python browser_control/lobster_steps.py --action run_workflow --workflow ${workflow_file} --cdp-url http://127.0.0.1:${chrome_port}
+    timeout: 120000
+
+  - id: verify-result
+    description: 验证 workflow 执行结果
+    run: python -c "import json,os; p='output/workflow_result.json'; print('PASS' if os.path.exists(p) and json.load(open(p))['steps'] else 'FAIL')"
+    on_error: continue
