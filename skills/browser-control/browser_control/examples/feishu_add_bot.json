@@ -1,0 +1,9 @@
+[
+  {"action": "nav", "url": "https://open.feishu.cn/app/cli_a95620cbb8399cdd/capability/"},
+  {"action": "wait_timeout", "ms": 4000},
+  {"action": "screenshot", "path": "F:\\openclaw1\\.openclaw\\workspace\\skills\\browser-control\\screenshots\\feishu_04_capability.png", "full_page": false},
+  {"action": "eval_js", "script": "(function(){var allBtns=document.querySelectorAll('button');for(var i=0;i<allBtns.length;i++){var t=allBtns[i].textContent.trim();if(t==='Add'&&allBtns[i].offsetWidth>0){allBtns[i].click();return 'ADD_CLICKED';}}return 'ADD_NOT_FOUND';})();"},
+  {"action": "wait_timeout", "ms": 3000},
+  {"action": "screenshot", "path": "F:\\openclaw1\\.openclaw\\workspace\\skills\\browser-control\\screenshots\\feishu_05_bot_added.png", "full_page": false},
+  {"action": "eval_js", "script": "(function(){return 'URL:'+window.location.href+'|Title:'+document.title;})();"}
+]
