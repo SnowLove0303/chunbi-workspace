@@ -1,0 +1,185 @@
+# 1688 选品 + 拼多多运营自动化技能 - 配置文件
+# 请根据实际情况修改以下参数
+
+# ==================== 基础配置 ====================
+basic:
+  # 技能名称
+  name: "1688 选品 + 拼多多运营自动化"
+  version: "1.0.0"
+  # 数据保存路径（相对于技能目录）
+  data_dir: "./data"
+  logs_dir: "./logs"
+  # 日志级别：DEBUG, INFO, WARNING, ERROR
+  log_level: "DEBUG"  # 测试模式使用详细日志
+
+# ==================== 1688 配置 ====================
+source_1688:
+  # 启用模式：api / browser / hybrid (混合模式)
+  mode: "hybrid"
+  # API 配置（如有）
+  api:
+    enabled: false
+    app_key: ""
+    app_secret: ""
+  # 浏览器自动化配置
+  browser:
+    # 浏览器类型：chrome / edge / firefox
+    type: "edge"
+    # 是否使用无头模式（后台运行，无界面）
+    headless: false
+    # 浏览器启动端口（用于复用已登录的浏览器）
+    port: 9222
+    # 用户数据目录（保存登录状态）
+    user_data_dir: "./browser_data/1688"
+  # 选品参数
+  selection:
+    # 目标毛利率（百分比）
+    min_profit_margin: 30
+    # 最低销量要求
+    min_sales: 50
+    # 供应商最低诚信通年限
+    min_chengxintong_years: 2
+    # 供应商最低回头率（百分比）
+    min_repeat_rate: 15
+    # 每次采集商品数量
+    batch_size: 20  # 测试模式减少数量
+    # 最大采集数量（测试用）
+    max_products: 10
+    # 采集类目关键词（可多个）
+    keywords:
+      - "居家日用"
+      - "收纳整理"
+      - "厨房用品"
+      - "创意礼品"
+      - "办公文具"
+
+# ==================== 拼多多配置 ====================
+platform_pdd:
+  # 启用模式：api / browser / hybrid
+  mode: "hybrid"
+  # API 配置
+  api:
+    enabled: false
+    client_id: ""
+    client_secret: ""
+    access_token: ""
+  # 浏览器自动化配置
+  browser:
+    type: "edge"
+    headless: false
+    port: 9223
+    user_data_dir: "./browser_data/pdd"
+  # 多店铺管理
+  shops:
+    # 店铺列表（可添加多个）
+    - shop_id: "shop_001"
+      shop_name: "店铺 A"
+      username: ""
+      password: ""
+      status: "active"  # active / inactive
+    - shop_id: "shop_002"
+      shop_name: "店铺 B"
+      username: ""
+      password: ""
+      status: "inactive"
+  # 上架参数
+  listing:
+    # 自动优化标题
+    auto_optimize_title: true
+    # 标题前缀（品牌词等）
+    title_prefix: ""
+    # 标题后缀（促销词等）
+    title_suffix: "包邮 正品 热销"
+    # 默认运费模板 ID
+    default_freight_template_id: ""
+    # 默认发货地
+    default_ship_from: "广东广州"
+    # 库存预警阈值
+    stock_warning_threshold: 10
+    # 价格策略：fixed / dynamic
+    pricing_strategy: "fixed"
+    # 固定加价比例（基于 1688 进货价）
+    fixed_markup_rate: 0.5  # 50% 加价
+    # 测试模式：仅模拟，不实际发布
+    test_mode: true
+
+# ==================== 订单处理配置 ====================
+order_processing:
+  # 订单监控间隔（秒）
+  check_interval: 300  # 5 分钟
+  # 自动确认订单（true/false）
+  auto_confirm: false
+  # 自动采购（跳转到 1688 下单）
+  auto_purchase: false
+  # 订单导出格式：excel / csv
+  export_format: "excel"
+  # 订单数据保留天数
+  retention_days: 90
+
+# ==================== 库存同步配置 ====================
+inventory_sync:
+  # 启用库存同步
+  enabled: true
+  # 同步间隔（秒）
+  sync_interval: 1800  # 30 分钟
+  # 安全库存（预留数量）
+  safety_stock: 5
+  # 低库存预警通知
+  low_stock_alert: true
+  # 预警阈值
+  low_stock_threshold: 20
+
+# ==================== 数据报表配置 ====================
+reports:
+  # 自动生成日报
+  daily_report: true
+  # 日报生成时间（24 小时制）
+  daily_report_time: "23:00"
+  # 报表推送方式：dingtalk / email / none
+  notify_method: "dingtalk"
+  # 钉钉机器人 Webhook URL（可选）
+  dingtalk_webhook: ""
+  # 邮件配置（可选）
+  email:
+    enabled: false
+    smtp_server: ""
+    smtp_port: 587
+    username: ""
+    password: ""
+    recipients: []
+
+# ==================== 风控合规配置 ====================
+compliance:
+  # 违禁词检测
+  forbidden_words_check: true
+  # 广告法检测
+  advertising_law_check: true
+  # 操作频率控制（秒）
+  action_delay: 3
+  # 单日最大上架数量
+  max_daily_listings: 100
+  # 异常重试次数
+  max_retries: 3
+  # 重试间隔（秒）
+  retry_delay: 60
+
+# ==================== 定时任务配置 ====================
+scheduler:
+  # 启用定时任务
+  enabled: true
+  # 时区
+  timezone: "Asia/Shanghai"
+  # 任务列表
+  tasks:
+    - name: "1688 选品采集"
+      cron: "0 9 * * *"  # 每天 9:00
+      enabled: true
+    - name: "拼多多订单处理"
+      interval: 300  # 每 5 分钟
+      enabled: true
+    - name: "库存同步"
+      interval: 1800  # 每 30 分钟
+      enabled: true
+    - name: "生成日报"
+      cron: "0 23 * * *"  # 每天 23:00
+      enabled: true

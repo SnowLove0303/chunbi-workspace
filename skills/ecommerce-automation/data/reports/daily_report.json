@@ -1,0 +1,27 @@
+{
+  "date": "2026-04-14",
+  "summary": {
+    "total_products": 156,
+    "new_listings": 12,
+    "total_orders": 28,
+    "total_revenue": 2856.5,
+    "total_profit": 1428.25
+  },
+  "top_products": [
+    {
+      "name": "创意收纳盒",
+      "sales": 15,
+      "revenue": 448.5
+    },
+    {
+      "name": "厨房置物架",
+      "sales": 8,
+      "revenue": 280.0
+    },
+    {
+      "name": "密封罐套装",
+      "sales": 12,
+      "revenue": 358.8
+    }
+  ]
+}
