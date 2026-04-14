@@ -1,0 +1,15 @@
+# 飞书应用创建自动化技能 - 依赖清单
+# Python 版本要求：3.8+
+
+# 核心依赖
+aiohttp>=3.9.0
+websockets>=12.0
+
+# 浏览器自动化（主方案：Selenium CDP）
+selenium>=4.15.0
+
+# 备用方案 (Playwright)
+playwright>=1.40.0
+
+# 工具库
+pathlib2>=2.3.7
