@@ -93,7 +93,7 @@ class ChromeCDPController:
                 resp = await session.get(f"http://127.0.0.1:{self.debug_port}/json/version")
                 if resp.status == 200:
                     data = await resp.json()
-                    logger.info(f"✓ 成功连接到 Chrome 浏览器 (版本：{data.get('Browser', 'Unknown')})")
+                    logger.info(f"[OK] 成功连接到 Chrome 浏览器 (版本：{data.get('Browser', 'Unknown')})")
                     
                     # 获取页面列表
                     pages_resp = await session.get(f"http://127.0.0.1:{self.debug_port}/json/list")
@@ -102,16 +102,16 @@ class ChromeCDPController:
                         for page in pages:
                             if page.get('type') == 'page':
                                 self.page_ws_url = page.get('webSocketDebuggerUrl')
-                                logger.info(f"✓ 找到可控制的页面：{page.get('title', 'Unknown')}")
+                                logger.info(f"[OK] 找到可控制的页面：{page.get('title', 'Unknown')}")
                                 return True
                     
-                    logger.warning("⚠️ 未找到可控制的页面，将打开新页面")
+                    logger.warning("[WARN] 未找到可控制的页面，将打开新页面")
                     return True
                 else:
-                    logger.error(f"✗ 连接失败：HTTP {resp.status}")
+                    logger.error(f"[FAIL] 连接失败：HTTP {resp.status}")
                     return False
         except Exception as e:
-            logger.error(f"✗ 连接异常：{e}")
+            logger.error(f"[FAIL] 连接异常：{e}")
             return False
     
     async def send_command(self, method: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
@@ -198,13 +198,13 @@ class ChromeCDPController:
                 """
                 result = await self.send_command("Runtime.evaluate", {"expression": js_code})
                 if result.get("result", {}).get("value", False):
-                    logger.info(f"✓ 成功点击：{sel}")
+                    logger.info(f"[OK] 成功点击：{sel}")
                     return True
             except Exception as e:
                 logger.debug(f"点击尝试失败 [{sel}]: {e}")
                 continue
         
-        logger.error(f"✗ 无法点击元素：{selector}")
+        logger.error(f"[FAIL] 无法点击元素：{selector}")
         return False
     
     async def type_text(self, selector: str, text: str) -> bool:
@@ -228,7 +228,7 @@ class ChromeCDPController:
                 await self.send_command("Input.insertText", {"text": char})
                 await asyncio.sleep(random.uniform(0.05, 0.15))
             
-            logger.info(f"✓ 输入文本：{text}")
+            logger.info(f"[OK] 输入文本：{text}")
             return True
         except Exception as e:
             logger.error(f"输入失败：{e}")
@@ -247,7 +247,7 @@ class ChromeCDPController:
                 image_data = base64.b64decode(result["data"])
                 with open(filepath, "wb") as f:
                     f.write(image_data)
-                logger.info(f"✓ 截图保存：{filepath}")
+                logger.info(f"[OK] 截图保存：{filepath}")
                 return str(filepath)
             return ""
         except Exception as e:
@@ -288,8 +288,8 @@ class FeishuAppCreator:
         logger.info("【步骤 1-2】检查飞书登录状态")
         
         if not await self.cdp.connect():
-            logger.error("✗ 无法连接到 Chrome 浏览器")
-            logger.info("💡 请确保 Chrome 以调试模式启动:")
+            logger.error("[FAIL] 无法连接到 Chrome 浏览器")
+            logger.info("[BULB] 请确保 Chrome 以调试模式启动:")
             logger.info(f'   "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --remote-debugging-port={CONFIG["debug_port"]} --user-data-dir="{CONFIG["user_data_dir"]}"')
             return False
         
@@ -297,7 +297,7 @@ class FeishuAppCreator:
         
         # 导航到飞书开发者后台
         if not await self.cdp.navigate(CONFIG["feishu_url"]):
-            logger.error("✗ 导航失败")
+            logger.error("[FAIL] 导航失败")
             return False
         
         await self.human_delay(3, 5)
@@ -311,13 +311,13 @@ class FeishuAppCreator:
         
         for indicator in login_indicators:
             if await self.cdp.wait_for_selector(indicator, timeout=5000):
-                logger.info("✓ 检测到已登录状态")
+                logger.info("[OK] 检测到已登录状态")
                 await self.cdp.screenshot("01_login_success.png")
                 self.screenshots.append("01_login_success.png")
                 return True
         
-        logger.warning("⚠️ 未检测到登录状态，可能需要扫码登录")
-        logger.info("💡 请在浏览器中手动扫码登录，然后按回车继续...")
+        logger.warning("[WARN] 未检测到登录状态，可能需要扫码登录")
+        logger.info("[BULB] 请在浏览器中手动扫码登录，然后按回车继续...")
         input("按回车键继续...")
         
         await self.cdp.screenshot("01_login_manual.png")
@@ -343,7 +343,7 @@ class FeishuAppCreator:
                 break
         
         if not created:
-            logger.warning("⚠️ 未找到创建按钮，尝试直接打开创建页面")
+            logger.warning("[WARN] 未找到创建按钮，尝试直接打开创建页面")
             await self.cdp.navigate("https://open.feishu.cn/app/create")
         
         await self.human_delay(3, 5)
@@ -389,7 +389,7 @@ class FeishuAppCreator:
         
         await self.cdp.screenshot("02_app_created.png")
         self.screenshots.append("02_app_created.png")
-        logger.info("✓ 应用创建完成")
+        logger.info("[OK] 应用创建完成")
         return True
     
     async def step_add_bot_function(self) -> bool:
@@ -438,7 +438,7 @@ class FeishuAppCreator:
         
         await self.cdp.screenshot("03_bot_added.png")
         self.screenshots.append("03_bot_added.png")
-        logger.info("✓ 机器人功能添加完成")
+        logger.info("[OK] 机器人功能添加完成")
         return True
     
     async def step_import_permissions(self) -> bool:
@@ -476,9 +476,9 @@ class FeishuAppCreator:
         try:
             with open(CONFIG["permissions_file"], 'r', encoding='utf-8') as f:
                 permissions_json = f.read()
-            logger.info(f"✓ 读取权限配置文件：{CONFIG['permissions_file']}")
+            logger.info(f"[OK] 读取权限配置文件：{CONFIG['permissions_file']}")
         except Exception as e:
-            logger.error(f"✗ 读取权限文件失败：{e}")
+            logger.error(f"[FAIL] 读取权限文件失败：{e}")
             return False
         
         # 粘贴 JSON 到输入框
@@ -548,7 +548,7 @@ class FeishuAppCreator:
         
         await self.cdp.screenshot("04_permissions_imported.png")
         self.screenshots.append("04_permissions_imported.png")
-        logger.info("✓ 权限导入完成")
+        logger.info("[OK] 权限导入完成")
         return True
     
     async def step_subscribe_events(self) -> bool:
@@ -649,7 +649,7 @@ class FeishuAppCreator:
         
         await self.cdp.screenshot("05_events_subscribed.png")
         self.screenshots.append("05_events_subscribed.png")
-        logger.info("✓ 事件订阅配置完成")
+        logger.info("[OK] 事件订阅配置完成")
         return True
     
     async def step_get_credentials(self) -> bool:
@@ -678,18 +678,18 @@ class FeishuAppCreator:
         app_id_match = re.search(r'App ID[:：]\s*([a-zA-Z0-9]+)', page_content)
         if app_id_match:
             self.app_id = app_id_match.group(1)
-            logger.info(f"✓ 获取到 APP ID: {self.app_id}")
+            logger.info(f"[OK] 获取到 APP ID: {self.app_id}")
         else:
-            logger.warning("⚠️ 未能自动提取 APP ID，请手动记录")
+            logger.warning("[WARN] 未能自动提取 APP ID，请手动记录")
         
         # 提示用户手动复制 APP Secret
-        logger.info("💡 请点击 APP Secret 旁边的眼睛图标查看，然后点击复制按钮")
+        logger.info("[BULB] 请点击 APP Secret 旁边的眼睛图标查看，然后点击复制按钮")
         logger.info("⏳ 等待 10 秒...")
         await asyncio.sleep(10)
         
         await self.cdp.screenshot("06_credentials.png")
         self.screenshots.append("06_credentials.png")
-        logger.info("✓ 凭证信息已截图保存")
+        logger.info("[OK] 凭证信息已截图保存")
         return True
     
     async def step_publish_version(self) -> bool:
@@ -697,24 +697,24 @@ class FeishuAppCreator:
         logger.info("=" * 60)
         logger.info("【步骤 30-31】发布应用版本")
         
-        logger.info("⚠️ 发布操作需要人工确认，请检查以下信息:")
+        logger.info("[WARN] 发布操作需要人工确认，请检查以下信息:")
         logger.info(f"   - 应用名称：{CONFIG['app_name']}")
         logger.info(f"   - APP ID: {self.app_id or '待确认'}")
         logger.info("   - 权限配置已完成")
         logger.info("   - 事件订阅已完成")
         logger.info("")
-        logger.info("💡 请在浏览器中点击'发布版本'按钮")
+        logger.info("[BULB] 请在浏览器中点击'发布版本'按钮")
         
         input("按回车键确认已发布...")
         
         await self.cdp.screenshot("07_published.png")
         self.screenshots.append("07_published.png")
-        logger.info("✓ 应用发布完成")
+        logger.info("[OK] 应用发布完成")
         return True
     
     async def run_full_workflow(self):
         """执行完整工作流"""
-        logger.info("🚀 飞书应用创建自动化 v4.0 启动")
+        logger.info("[ROCKET] 飞书应用创建自动化 v4.0 启动")
         logger.info(f"📋 应用名称：{CONFIG['app_name']}")
         logger.info(f"🔧 调试端口：{CONFIG['debug_port']}")
         logger.info(f"📸 截图目录：{CONFIG['screenshot_dir']}")
@@ -737,10 +737,10 @@ class FeishuAppCreator:
                 success = await step_func()
                 results.append({"step": step_name, "success": success})
                 if not success:
-                    logger.error(f"✗ 步骤失败：{step_name}")
+                    logger.error(f"[FAIL] 步骤失败：{step_name}")
                     break
             except Exception as e:
-                logger.error(f"✗ 步骤异常 [{step_name}]: {e}")
+                logger.error(f"[FAIL] 步骤异常 [{step_name}]: {e}")
                 results.append({"step": step_name, "success": False, "error": str(e)})
                 break
         
@@ -765,7 +765,7 @@ class FeishuAppCreator:
             f.write("执行步骤:\n")
             f.write("-" * 80 + "\n")
             for i, result in enumerate(results, 1):
-                status = "✓" if result.get("success") else "✗"
+                status = "[OK]" if result.get("success") else "[FAIL]"
                 error_info = f" (错误：{result.get('error', '未知')})" if not result.get("success") and result.get("error") else ""
                 f.write(f"{i}. {status} {result['step']}{error_info}\n")
             
@@ -781,7 +781,7 @@ class FeishuAppCreator:
             f.write("3. 部分权限可能需要管理员审批\n")
             f.write("=" * 80 + "\n")
         
-        logger.info(f"✓ 执行报告已保存：{report_file}")
+        logger.info(f"[OK] 执行报告已保存：{report_file}")
 
 # ==================== 主函数 ====================
 

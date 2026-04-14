@@ -23,6 +23,7 @@ TEST_CONFIG = {
     "app_name": "飞书 Flow 测试",
     "app_description": "1",
     "permissions_file": r"C:\Users\chenz\Documents\Obsidian Vault\开发项目ing\飞书\json.md",
+    "feishu_url": "https://open.feishu.cn/app",
     "test_delay_range": (0.5, 1.5),  # 测试模式使用较短延迟
 }
 
@@ -39,7 +40,7 @@ class MockCDPController:
         print(f"  [模拟] 连接到 Chrome 浏览器...")
         await self._delay(0.3)
         self.connected = True
-        print(f"  ✓ [模拟] 连接成功")
+        print(f"  [OK] [模拟] 连接成功")
         return True
     
     async def navigate(self, url: str) -> bool:
@@ -54,21 +55,21 @@ class MockCDPController:
         # 模拟 80% 成功率
         success = random.random() > 0.2
         if success:
-            print(f"  ✓ [模拟] 元素已就绪")
+            print(f"  [OK] [模拟] 元素已就绪")
         else:
-            print(f"  ⚠ [模拟] 元素未找到 (超时)")
+            print(f"  [WARN] [模拟] 元素未找到 (超时)")
         return success
     
     async def click_element(self, selector: str) -> bool:
         print(f"  [模拟] 点击元素：{selector}")
         await self._delay(0.2)
-        print(f"  ✓ [模拟] 点击成功")
+        print(f"  [OK] [模拟] 点击成功")
         return True
     
     async def type_text(self, selector: str, text: str) -> bool:
         print(f"  [模拟] 输入文本：'{text}'")
         await self._delay(0.3)
-        print(f"  ✓ [模拟] 输入完成")
+        print(f"  [OK] [模拟] 输入完成")
         return True
     
     async def screenshot(self, filename: str) -> str:
@@ -108,13 +109,13 @@ class MockFeishuAppCreator:
         print("="*60)
         
         if not await self.cdp.connect():
-            print("  ✗ [失败] 无法连接到 Chrome 浏览器")
+            print("  [FAIL] [失败] 无法连接到 Chrome 浏览器")
             return False
         
         await self.human_delay(0.5, 1)
         
         if not await self.cdp.navigate(TEST_CONFIG["feishu_url"]):
-            print("  ✗ [失败] 导航失败")
+            print("  [FAIL] [失败] 导航失败")
             return False
         
         await self.human_delay(0.5, 1)
@@ -122,12 +123,12 @@ class MockFeishuAppCreator:
         # 模拟检测登录状态
         login_success = random.random() > 0.1  # 90% 成功率
         if login_success:
-            print("  ✓ [成功] 检测到已登录状态")
+            print("  [OK] [成功] 检测到已登录状态")
             await self.cdp.screenshot("01_login_success.png")
             self.screenshots.append("01_login_success.png")
             return True
         else:
-            print("  ⚠ [模拟] 需要扫码登录（测试跳过）")
+            print("  [WARN] [模拟] 需要扫码登录（测试跳过）")
             return True
     
     async def step_create_app(self) -> bool:
@@ -152,7 +153,7 @@ class MockFeishuAppCreator:
         
         await self.cdp.screenshot("02_app_created.png")
         self.screenshots.append("02_app_created.png")
-        print("  ✓ [成功] 应用创建完成")
+        print("  [OK] [成功] 应用创建完成")
         return True
     
     async def step_add_bot_function(self) -> bool:
@@ -172,7 +173,7 @@ class MockFeishuAppCreator:
         
         await self.cdp.screenshot("03_bot_added.png")
         self.screenshots.append("03_bot_added.png")
-        print("  ✓ [成功] 机器人功能添加完成")
+        print("  [OK] [成功] 机器人功能添加完成")
         return True
     
     async def step_import_permissions(self) -> bool:
@@ -193,7 +194,7 @@ class MockFeishuAppCreator:
             print(f"  [信息] 读取权限配置：租户级 {tenant_scopes} 个，用户级 {user_scopes} 个")
             print(f"  [信息] 总计 {total_scopes} 个权限点")
         except Exception as e:
-            print(f"  ⚠ [警告] 无法读取权限文件：{e}")
+            print(f"  [WARN] [警告] 无法读取权限文件：{e}")
             print(f"  [信息] 使用模拟数据继续测试")
             total_scopes = 196
         
@@ -221,7 +222,7 @@ class MockFeishuAppCreator:
         
         await self.cdp.screenshot("04_permissions_imported.png")
         self.screenshots.append("04_permissions_imported.png")
-        print(f"  ✓ [成功] 权限导入完成（模拟 {total_scopes} 个权限）")
+        print(f"  [OK] [成功] 权限导入完成（模拟 {total_scopes} 个权限）")
         return True
     
     async def step_subscribe_events(self) -> bool:
@@ -253,7 +254,7 @@ class MockFeishuAppCreator:
         
         await self.cdp.screenshot("05_events_subscribed.png")
         self.screenshots.append("05_events_subscribed.png")
-        print("  ✓ [成功] 事件订阅配置完成")
+        print("  [OK] [成功] 事件订阅配置完成")
         return True
     
     async def step_get_credentials(self) -> bool:
@@ -270,8 +271,8 @@ class MockFeishuAppCreator:
         self.app_id = "cli_1234567890"  # 模拟 APP ID
         self.app_secret = "mock_secret_" + datetime.now().strftime("%Y%m%d%H%M%S")
         
-        print(f"  ✓ [成功] 获取到 APP ID: {self.app_id}")
-        print(f"  ✓ [成功] 生成模拟 APP Secret: {self.app_secret[:20]}...")
+        print(f"  [OK] [成功] 获取到 APP ID: {self.app_id}")
+        print(f"  [OK] [成功] 生成模拟 APP Secret: {self.app_secret[:20]}...")
         
         await self.cdp.screenshot("06_credentials.png")
         self.screenshots.append("06_credentials.png")
@@ -288,13 +289,13 @@ class MockFeishuAppCreator:
         
         await self.cdp.screenshot("07_published.png")
         self.screenshots.append("07_published.png")
-        print("  ✓ [成功] 应用发布完成（模拟）")
+        print("  [OK] [成功] 应用发布完成（模拟）")
         return True
     
     async def run_full_workflow(self):
         """执行完整工作流"""
         print("\n" + "="*80)
-        print("🚀 飞书应用创建自动化 v4.0 - 演示测试")
+        print("[ROCKET] 飞书应用创建自动化 v4.0 - 演示测试")
         print("="*80)
         print(f"应用名称：{TEST_CONFIG['app_name']}")
         print(f"测试模式：启用（无真实浏览器操作）")
@@ -319,11 +320,11 @@ class MockFeishuAppCreator:
                 results.append({"step": step_name, "success": success})
                 
                 if not success:
-                    print(f"\n  ✗ [终止] 步骤失败：{step_name}")
+                    print(f"\n  [FAIL] [终止] 步骤失败：{step_name}")
                     break
                     
             except Exception as e:
-                print(f"\n  ✗ [异常] 步骤出错 [{step_name}]: {e}")
+                print(f"\n  [FAIL] [异常] 步骤出错 [{step_name}]: {e}")
                 results.append({"step": step_name, "success": False, "error": str(e)})
                 break
         
@@ -335,17 +336,56 @@ class MockFeishuAppCreator:
         return results
     
     def generate_test_report(self, results: list, elapsed_time: float):
-        """生成测试报告"""
-        import asyncio
-        # 在同步上下文中调用异步函数
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            loop.run_until_complete(self._generate_test_report_async(results, elapsed_time))
-        finally:
-            loop.close()
-    
-    async def _generate_test_report_async(self, results: list, elapsed_time: float):
+        """生成测试报告（同步版本，避免嵌套事件循环）"""
+        test_dir = Path("F:/openclaw1/.openclaw/workspace/skills/feishu-app-v4/test_results")
+        test_dir.mkdir(exist_ok=True)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        report_file = test_dir / f"demo_test_{timestamp}.txt"
+
+        successful_steps = sum(1 for r in results if r.get("success"))
+        total_steps = len(results)
+
+        with open(report_file, 'w', encoding='utf-8') as f:
+            f.write("="*80 + "\n")
+            f.write("[Feishu App Creator] Demo Test Report\n")
+            f.write("="*80 + "\n\n")
+
+            f.write(f"Test Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"App Name: {TEST_CONFIG['app_name']}\n")
+            f.write(f"Total Duration: {elapsed_time:.2f} sec\n")
+            f.write(f"Successful Steps: {successful_steps}/{total_steps}\n")
+            f.write(f"APP ID: {self.app_id or 'N/A'}\n\n")
+
+            f.write("Step Results:\n")
+            f.write("-"*80 + "\n")
+            for i, result in enumerate(results, 1):
+                status = "[OK]" if result.get("success") else "[FAIL]"
+                error_info = f" (Error: {result.get('error', 'unknown')})" if not result.get("success") and result.get("error") else ""
+                f.write(f"{i}. {status} {result['step']}{error_info}\n")
+
+            f.write("\nScreenshots:\n")
+            f.write("-"*80 + "\n")
+            for screenshot in self.screenshots:
+                f.write(f"- {screenshot}\n")
+
+            f.write("\nConclusion:\n")
+            f.write("-"*80 + "\n")
+            if successful_steps == total_steps:
+                f.write("[OK] All test steps passed! Script logic is correct.\n")
+            else:
+                f.write(f"[WARN] {total_steps - successful_steps} steps failed.\n")
+
+            f.write("\nNext Steps:\n")
+            f.write("-"*80 + "\n")
+            f.write("1. Run install.bat to install dependencies\n")
+            f.write("2. Start Chrome with debugging mode\n")
+            f.write("3. Run run.bat for real environment test\n")
+            f.write("="*80 + "\n")
+
+        print("\n" + "="*80)
+        print(f"[OK] Test report saved: {report_file}")
+
         """异步生成测试报告"""
         test_dir = Path("./test_results")
         test_dir.mkdir(exist_ok=True)
@@ -371,7 +411,7 @@ class MockFeishuAppCreator:
             f.write("测试结果详情:\n")
             f.write("-"*80 + "\n")
             for i, result in enumerate(results, 1):
-                status = "✓" if result.get("success") else "✗"
+                status = "[OK]" if result.get("success") else "[FAIL]"
                 error_info = f" (错误：{result.get('error', '未知')})" if not result.get("success") and result.get("error") else ""
                 f.write(f"{i}. {status} {result['step']}{error_info}\n")
             
@@ -383,9 +423,9 @@ class MockFeishuAppCreator:
             f.write("\n结论:\n")
             f.write("-"*80 + "\n")
             if successful_steps == total_steps:
-                f.write("✓ 所有测试步骤通过！脚本逻辑正确，可以在真实环境中使用。\n")
+                f.write("[OK] 所有测试步骤通过！脚本逻辑正确，可以在真实环境中使用。\n")
             else:
-                f.write(f"⚠ {total_steps - successful_steps} 个步骤失败，请检查日志了解详情。\n")
+                f.write(f"[WARN] {total_steps - successful_steps} 个步骤失败，请检查日志了解详情。\n")
             
             f.write("\n下一步:\n")
             f.write("-"*80 + "\n")
@@ -395,7 +435,7 @@ class MockFeishuAppCreator:
             f.write("="*80 + "\n")
         
         print("\n" + "="*80)
-        print(f"✓ 测试报告已保存：{report_file}")
+        print(f"[OK] 测试报告已保存：{report_file}")
         print("="*80)
 
 
@@ -407,13 +447,13 @@ async def main():
     results = await creator.run_full_workflow()
     
     print("\n" + "="*80)
-    print("🎉 演示测试完成!")
+    print("[PARTY] 演示测试完成!")
     print("="*80)
     print(f"成功步骤：{sum(1 for r in results if r.get('success'))}/{len(results)}")
     print(f"模拟截图：{len(creator.screenshots)} 张")
     print(f"APP ID: {creator.app_id or 'N/A'}")
     print("="*80)
-    print("\n💡 提示:")
+    print("\n[BULB] 提示:")
     print("   - 这是演示测试，未实际操作真实浏览器")
     print("   - 真实使用请运行 run.bat")
     print("="*80)
