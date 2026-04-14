@@ -1,0 +1,17 @@
+{
+  "name": "human-desktop-agent",
+  "version": "1.0.0",
+  "description": "真人级桌面 Agent：browser-use + 屏幕解析双引擎，支持自然语言控制浏览器和桌面",
+  "author": "春笔",
+  "tags": ["browser", "automation", "desktop", "ai"],
+  "dependencies": [
+    "browser-use>=0.12.6",
+    "pyautogui",
+    "Pillow",
+    "opencv-python"
+  ],
+  "env": {
+    "OPENROUTER_API_KEY": "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",
+    "MINIMAX_API_KEY": "sk-cp-VmUpM6ECqaSgr33MzjKMQNgy8cFgArOp0CHifxdVi7qsjPUva3I-dmyTkqPreAyS53oSQZzZyCFFLP-bTbgfIXCnaqc7Iv2TJQgsE3fY5ntSxeddnX-XH_o"
+  }
+}
