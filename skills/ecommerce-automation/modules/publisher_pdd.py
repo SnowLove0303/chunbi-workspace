@@ -16,7 +16,7 @@ import time
 import pandas as pd
 from datetime import datetime
 from loguru import logger
-from playwright.sync_api import sync_playwright, TimeoutException
+from playwright.sync_api import sync_playwright, TimeoutError
 
 # 添加父目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -122,6 +122,11 @@ class PublisherPDD:
                         f"--remote-debugging-port={self.browser_config.get('port', 9223)}"
                     ]
                 
+                # 使用系统 Edge
+                edge_path = r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"
+                if os.path.exists(edge_path):
+                    launch_args["executable_path"] = edge_path
+
                 self.browser = browser_type.launch(**launch_args)
                 self.page = self.browser.new_page()
                 
@@ -203,7 +208,7 @@ class PublisherPDD:
                 self.page.wait_for_url("https://mms.pinduoduo.com/*", timeout=120000)
                 logger.info("登录成功")
                 return True
-            except TimeoutException:
+            except TimeoutError:
                 logger.error("登录超时")
                 return False
                 

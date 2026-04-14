@@ -15,7 +15,7 @@ import time
 import pandas as pd
 from datetime import datetime
 from loguru import logger
-from playwright.sync_api import sync_playwright, TimeoutException
+from playwright.sync_api import sync_playwright, TimeoutError
 
 # 添加父目录到路径，便于导入 utils
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -131,6 +131,11 @@ class Selector1688:
                     f"--remote-debugging-port={self.browser_config.get('port', 9222)}"
                 ]
             
+            # 使用系统 Edge（Windows 自带，无需下载 Playwright 内置浏览器）
+            edge_path = r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"
+            if os.path.exists(edge_path):
+                launch_args["executable_path"] = edge_path
+
             self.browser = browser_type.launch(**launch_args)
             self.page = self.browser.new_page()
             
@@ -155,7 +160,7 @@ class Selector1688:
                     # 翻页逻辑（可选）
                     # TODO: 实现自动翻页
                     
-            except TimeoutException:
+            except TimeoutError:
                 logger.error("页面加载超时")
             except Exception as e:
                 logger.error(f"浏览器采集异常：{e}")

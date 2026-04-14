@@ -77,9 +77,14 @@ class BrowserManager:
                     "--disable-features=IsolateOrigins,site-per-process",
                 ])
             
+            # 使用系统 Edge（Windows 自带，无需下载 Playwright 内置浏览器）
+            edge_path = r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"
+            if os.path.exists(edge_path):
+                launch_args["executable_path"] = edge_path
+
             # 启动浏览器
             self.browser = browser_factory.launch(**launch_args)
-            
+
             # 创建新页面
             self.page = self.browser.new_page()
             

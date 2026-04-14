@@ -15,7 +15,7 @@ import time
 import pandas as pd
 from datetime import datetime, timedelta
 from loguru import logger
-from playwright.sync_api import sync_playwright, TimeoutException
+from playwright.sync_api import sync_playwright, TimeoutError
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.excel_handler import ExcelHandler
@@ -85,6 +85,11 @@ class OrderProcessor:
                         f"--remote-debugging-port={self.platform_config.get('browser', {}).get('port', 9223)}"
                     ]
                 
+                # 使用系统 Edge
+                edge_path = r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"
+                if os.path.exists(edge_path):
+                    launch_args["executable_path"] = edge_path
+
                 self.browser = browser_type.launch(**launch_args)
                 self.page = self.browser.new_page()
                 
@@ -141,7 +146,7 @@ class OrderProcessor:
             try:
                 self.page.wait_for_url("https://mms.pinduoduo.com/*", timeout=120000)
                 return True
-            except TimeoutException:
+            except TimeoutError:
                 return False
                 
         except Exception as e:
