@@ -1,7 +1,8 @@
 ---
 name: human-desktop-agent
 description: |
-  真人级桌面 Agent：browser-use + 屏幕解析双引擎。
+  真人级桌面 Agent Skill（2026-04-14）。
+  组合 browser-use + desktop-automation-ultra + 屏幕解析三大引擎。
   用途：(1) AI 操控浏览器完成网页任务 (2) 截屏理解界面 (3) 自然语言控制桌面操作。
   触发词：浏览器自动化、网页操作、屏幕理解、桌面控制、真人接管。
 triggers:
@@ -12,6 +13,13 @@ triggers:
   - 真人接管
   - 网页任务
 ---
+
+> ⚠️ **状态 (2026-04-14)：**
+> - `browser-use` 0.12.6 已安装，Chrome CDP 连接正常
+> - `MiniMax API` 会同时返回 `content` + `reasoning_content`，导致 browser-use JSON 解析失败
+> - `desktop-automation-ultra` 正常工作（推荐优先使用）
+> - 桌面基础控制（pyautogui + pygetwindow）✅ 正常
+
 
 # Human Desktop Agent ✒️
 
