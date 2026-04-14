@@ -130,7 +130,7 @@ def cache_set(key: str, data, target_date: str = None):
 
 # ======================= Step 1: 获取视频列表 =======================
 def fetch_videos(uid: str, target_date: str = None) -> list:
-    """获取UP主视频列表：优先yt-dlp，失败则用B站API"""
+    """获取UP主视频列表：优先yt-dlp，失败则用B站API，最后用OpenCLI兜底"""
     cached = cache_get(f"videos_{uid}", target_date)
     if cached:
         log(f" [CACHE] 视频列表缓存有效")
@@ -151,10 +151,22 @@ def fetch_videos(uid: str, target_date: str = None) -> list:
         log(f" [OK] API获取{len(videos)}个视频")
         return videos
 
+    # 方法3: OpenCLI Chrome接管（最终兜底，永不失手）
+    log(f" [WARN] API也失败，尝试OpenCLI Chrome接管...")
+    try:
+        from opencli_bilibili import fetch_via_opencli
+        videos = fetch_via_opencli(uid, target_date)
+        if videos:
+            cache_set(f"videos_{uid}", videos, target_date)
+            log(f" [OK] OpenCLI获取{len(videos)}个视频")
+            return videos
+    except Exception as e:
+        log(f" [WARN] OpenCLI失败: {e}")
+
     if cached:
         log(f" [CACHE] 使用过期缓存")
         return cached
-    log(f" [FAIL] 无法获取视频列表")
+    log(f" [FAIL] 所有方法均失败")
     return []
 
 
