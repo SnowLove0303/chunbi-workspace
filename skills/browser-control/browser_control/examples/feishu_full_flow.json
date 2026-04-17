@@ -1,0 +1,7 @@
+[
+  {"action": "nav", "url": "https://open.feishu.cn/app/cli_a95620cbb8399cdd/credentials"},
+  {"action": "wait_timeout", "ms": 5000},
+  {"action": "eval_js", "script": "(function(){var allBtns=document.querySelectorAll('button');for(var i=0;i<allBtns.length;i++){var r=allBtns[i].getBoundingClientRect();if(Math.abs(r.x-985)<10&&Math.abs(r.y-259)<10){allBtns[i].click();return 'EYE_CLICKED';}}return 'NOT_FOUND';}());"},
+  {"action": "wait_timeout", "ms": 1000},
+  {"action": "eval_js", "script": "(function(){var container=document.querySelector('.secret-code__btns');if(!container)return 'NO_CONTAINER';var icon=container.querySelector('.universe-icon');if(icon){var r=icon.getBoundingClientRect();return 'ICON:('+Math.round(r.x)+','+Math.round(r.y)+')';}return 'NO_ICON';}());"}
+]

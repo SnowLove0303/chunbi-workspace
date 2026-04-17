@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["aily:file:read","aily:file:write","application:application.app_message_stats.overview:readonly"],"user":["aily:file:read","aily:file:write"]}}

@@ -1,0 +1,1 @@
+{"scopes":{"tenant":[],"user":["calendar:calendar.event:create","calendar:calendar.event:delete","calendar:calendar.event:read"]}}

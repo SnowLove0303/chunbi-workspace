@@ -3,63 +3,13 @@
     {
       "action": "eval_js",
       "ok": true,
-      "value": "CLICKED"
-    },
-    {
-      "action": "wait_timeout",
-      "ok": true,
-      "ms": 3000
-    },
-    {
-      "action": "eval_js",
-      "ok": true,
-      "value": "FOCUSED_W:1"
-    },
-    {
-      "action": "wait_timeout",
-      "ok": true,
-      "ms": 300
-    },
-    {
-      "action": "press",
-      "ok": true,
-      "key": "Control+a"
-    },
-    {
-      "action": "wait_timeout",
-      "ok": true,
-      "ms": 200
-    },
-    {
-      "action": "press",
-      "ok": true,
-      "key": "Delete"
-    },
-    {
-      "action": "wait_timeout",
-      "ok": true,
-      "ms": 500
-    },
-    {
-      "action": "type",
-      "ok": true,
-      "selector": "body",
-      "text": "TEST_INPUT_ABC",
-      "timeout": 5000
-    },
-    {
-      "action": "wait_timeout",
-      "ok": true,
-      "ms": 500
-    },
-    {
-      "action": "eval_js",
-      "ok": true,
-      "value": "LEN:14_VAL:TEST_INPUT_ABC"
+      "script": "(function(){var allEls=document.querySelectorAll('.secret-code__btns,.secret-code__btn');var result=[];allEls.forEach(function(el){var r=el.getBoundingClientRect();var cl=el.className||'';var t=(el.textContent||'').trim();result.push({cl:cl.substring(0,30),t:t.substring(0,15),x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width)});});return JSON.stringify(result.slice(0,15));})();",
+      "result": "[{\"cl\":\"secret-code__btns\",\"t\":\"\",\"x\":254,\"y\":259,\"w\":30},{\"cl\":\"universe-icon g__text-linkable\",\"t\""
     }
   ],
-  "final_url": "",
-  "title": "Permissions & Scopes - CopawFeishuTest - Developer Console",
+  "final_url": "https://open.feishu.cn/app/cli_a95620cbb8399cdd/baseinfo",
+  "title": "Credentials & Basic Info - CopawFeishuTest - Developer Console",
   "screenshots": [],
-  "extracted": {}
+  "extracted": {},
+  "ok": true
 }

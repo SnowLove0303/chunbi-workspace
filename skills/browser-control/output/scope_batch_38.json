@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["docx:document:write_only","drive:drive.metadata:readonly"],"user":["docx:document:write_only","drive:drive.metadata:readonly","drive:file:download","drive:file:upload"]}}

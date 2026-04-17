@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["im:chat.chat_pins:write_only","im:chat.collab_plugins:read","im:chat.collab_plugins:write_only","im:chat.managers:write_only"],"user":[]}}

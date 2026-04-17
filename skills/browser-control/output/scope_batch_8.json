@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["docs:event.document_opened:read","docs:event:subscribe","docs:permission.member","docs:permission.member:auth"],"user":[]}}

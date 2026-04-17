@@ -1,0 +1,1 @@
+{"scopes":{"tenant":[],"user":["base:record:retrieve","base:record:update","base:table:create","base:table:delete","base:table:read","base:table:update"]}}

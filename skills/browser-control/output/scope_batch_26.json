@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["search:dataset.docs:create","search:dataset.docs:delete","sheets:spreadsheet.meta:write_only","sheets:spreadsheet:write_only"],"user":["sheets:spreadsheet:write_only"]}}

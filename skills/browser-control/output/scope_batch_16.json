@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["im:chat.access_event.bot_p2p_chat:read","im:chat.announcement:read","im:chat.announcement:write_only","im:chat.chat_pins:read"],"user":["im:chat.access_event.bot_p2p_chat:read"]}}

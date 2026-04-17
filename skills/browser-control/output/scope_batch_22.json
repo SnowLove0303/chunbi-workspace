@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["im:datasync.feed_card.time_sensitive:write","im:message","im:message.group_at_msg:readonly","im:message.group_msg"],"user":["im:message"]}}

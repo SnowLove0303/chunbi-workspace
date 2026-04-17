@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["cardkit:card:write","cardkit:template:read","contact:contact.base:readonly","contact:user.employee_id:readonly"],"user":["contact:contact.base:readonly","contact:user.employee_id:readonly"]}}

@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["sheets:spreadsheet:write_only"],"user":["sheets:spreadsheet.meta:read","sheets:spreadsheet:create","sheets:spreadsheet:read","sheets:spreadsheet:write_only"]}}

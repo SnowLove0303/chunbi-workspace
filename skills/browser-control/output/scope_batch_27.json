@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["slides:presentation:write_only","space:document.event:read","space:document:delete","space:document:move"],"user":["space:document:delete","space:document:move"]}}

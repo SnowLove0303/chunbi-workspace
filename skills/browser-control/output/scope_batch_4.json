@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["corehr:file:download","docs:doc","docs:doc:readonly","docs:document.comment:create","docs:document.comment:read"],"user":["docs:document.comment:create","docs:document.comment:read"]}}

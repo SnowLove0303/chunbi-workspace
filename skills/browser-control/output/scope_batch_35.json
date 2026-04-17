@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["contact:contact.base:readonly","contact:user.employee_id:readonly"],"user":["contact:contact.base:readonly","contact:user.base:readonly","contact:user.employee_id:readonly","contact:user:search"]}}

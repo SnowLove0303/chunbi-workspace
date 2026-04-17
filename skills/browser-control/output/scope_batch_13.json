@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["docx:document.block:convert","docx:document:create","docx:document:readonly","docx:document:write_only","drive:drive"],"user":["docx:document:create","docx:document:readonly","docx:document:write_only"]}}

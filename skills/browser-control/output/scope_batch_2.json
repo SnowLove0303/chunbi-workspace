@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["application:application:self_manage","application:bot.menu:write","auth:user_access_token:read","cardkit:card:read"],"user":[]}}

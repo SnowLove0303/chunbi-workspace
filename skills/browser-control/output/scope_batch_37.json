@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["docs:document.media:upload","docs:document:copy","docs:document:export","docx:document:create","docx:document:readonly"],"user":["docs:document.media:upload","docs:document:copy","docs:document:export","docx:document:create","docx:document:readonly"]}}

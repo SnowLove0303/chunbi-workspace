@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["space:document:delete","space:document:move","space:document:retrieve"],"user":["space:document:delete","space:document:move","space:document:retrieve","task:comment:read","task:comment:write"]}}

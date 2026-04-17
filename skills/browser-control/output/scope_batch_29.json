@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["wiki:wiki:readonly","aily:file:read","aily:file:write"],"user":["aily:file:read","aily:file:write","base:app:copy","base:app:create","base:app:read","base:app:update"]}}

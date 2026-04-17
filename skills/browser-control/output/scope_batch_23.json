@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["im:message.p2p_msg:readonly","im:message.pins:read","im:message.pins:write_only","im:message.reactions:read"],"user":[]}}

@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["space:document:retrieve","space:document:shortcut","wiki:setting:write_only","wiki:space:write_only","wiki:wiki"],"user":["space:document:retrieve","wiki:space:write_only"]}}

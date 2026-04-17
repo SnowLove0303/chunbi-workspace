@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["docs:document.media:upload","docs:document.subscription","docs:document.subscription:read","docs:document:copy"],"user":["docs:document.media:upload","docs:document:copy"]}}

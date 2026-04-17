@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["im:message:readonly"],"user":["im:message.p2p_msg:get_as_user","im:message:readonly","mail:event","offline_access","search:docs:read","search:message"]}}

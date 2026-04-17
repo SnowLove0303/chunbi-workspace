@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["im:chat.top_notice:write_only","im:chat.widgets:read","im:chat.widgets:write_only","im:chat:create","im:chat:delete"],"user":[]}}

@@ -1,0 +1,1 @@
+{"scopes":{"tenant":[],"user":["task:task:read","task:task:write","task:task:writeonly","task:tasklist:read","task:tasklist:write","wiki:node:copy"]}}

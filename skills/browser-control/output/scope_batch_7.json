@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["docs:document:export","docs:document:import","docs:event.document_deleted:read","docs:event.document_edited:read"],"user":["docs:document:export"]}}

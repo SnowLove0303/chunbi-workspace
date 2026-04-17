@@ -1,0 +1,1 @@
+{"scopes":{"tenant":["im:chat.members:bot_access","im:chat.members:read","im:chat.members:write_only","im:chat.menu_tree:read"],"user":["im:chat.members:read"]}}
